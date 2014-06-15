@@ -1,0 +1,58 @@
+<select class="stopSelect" name="stopSelect" style="display: inline-block;">
+	<option value="105">Avondale</option>
+	<option value="119">Baldwin Ave</option>
+	<option value="133">Britomart</option>
+	<option value="112">Ellerslie</option>
+	<option value="123">Fruitvale Rd</option>
+	<option value="124">Glen Eden</option>
+	<option value="103">Glen Innes</option>
+	<option value="277">Grafton</option>
+	<option value="113">Greenlane</option>
+	<option value="125">Henderson</option>
+	<option value="99">Homai</option>
+	<option value="122">Kingsland</option>
+	<option value="9218">Manukau</option>
+	<option value="98">Manurewa</option>
+	<option value="117">Meadowbank</option>
+	<option value="109">Middlemore</option>
+	<option value="104">Morningside</option>
+	<option value="120">Mt Albert</option>
+	<option value="118">Mt Eden</option>
+	<option value="129">New Lynn</option>
+	<option value="115">Newmarket</option>
+	<option value="605">Onehunga</option>
+	<option value="116">Orakei</option>
+	<option value="101">Otahuhu</option>
+	<option value="130">Panmure</option>
+	<option value="97">Papakura</option>
+	<option value="100">Papatoetoe</option>
+	<option value="102">Penrose</option>
+	<option value="607">Penrose Platform 3</option>
+	<option value="108">Puhinui</option>
+	<option value="134">Pukekohe</option>
+	<option value="128">Ranui</option>
+	<option value="114">Remuera</option>
+	<option value="126">Sturges</option>
+	<option value="121">Sunnyvale</option>
+	<option value="127">Swanson</option>
+	<option value="244">Sylvia Park</option>
+	<option value="106">Takanini</option>
+	<option value="107">Te Mahia</option>
+	<option value="606">Te Papapa</option>
+	<option value="132">Waitakere</option>
+	<option value="111">Westfield</option>
+</select>
+<script src="http://yui.yahooapis.com/3.17.2/build/yui/yui-min.js"></script>
+<script>
+YUI().use('json-stringify', 'node-base', function (Y) {
+	var stations = [];
+
+	Y.all('select option').each(function(node, index) {
+		stations[index] = {
+			stop: node.get('value'),
+			name: node.get('text')
+		};
+	}, this);
+	document.write(Y.JSON.stringify(stations));
+});
+</script>
