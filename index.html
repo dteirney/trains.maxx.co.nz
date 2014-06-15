@@ -1,0 +1,446 @@
+<!doctype html>
+<html>
+<head>
+<title>Real Time Board - MAXX</title>
+<link rel="stylesheet" type="text/css" href="http://yui.yahooapis.com/3.17.2/build/cssreset/cssreset-min.css">
+<link rel="stylesheet" type="text/css" href="fonts/scoreboard/stylesheet.css">
+<link rel="shortcut icon" href="http://www.maxx.co.nz/favicon.ico">
+<style>
+/* TODO: resolve the specificity of most of the selectors. */
+* {
+    box-sizing: border-box;
+}
+
+a,
+a:hover,
+a:visited {
+    color: #1e3d5e;
+}
+
+body {
+    font-family: 'Arial', 'Helvetica', sans-serif;
+}
+
+table {
+    width: 640px;
+    margin: auto;
+    border: 24px solid #1e3d5e;
+    color: #ffffff;
+    background-color: #1e3d5e;
+}
+
+caption {
+    padding-top: 12px;
+    background-color: #1e3d5e;
+    color: #ffffff;
+    font-size: 60px;
+    text-align: center;
+}
+
+thead th {
+    padding-bottom: 6px;
+}
+
+tbody td {
+    padding-top: 6px;
+    padding-right: 12px;
+    padding-left: 12px;
+    font-family: 'score_boardregular';
+    font-size: 36px;
+    color: #ffce73;
+    line-height: 90%;
+    background-color: #333333;
+    text-shadow: 0 0 3px #fddfa3;
+    text-transform: uppercase;
+}
+
+/* TODO: Change class for the scoreboard font to include the line-height and padding instead. */
+
+tfoot td {
+    padding-top: 12px;
+    padding-left: 12px;
+    padding-right: 12px;
+}
+
+thead th {
+    padding-left: 12px;
+    padding-right: 12px;
+}
+
+.rtb-container {
+    min-height: 400px;
+}
+
+.right-align {
+    text-align: right;
+}
+
+.rtb-schedule {
+    min-height: 200px;
+}
+
+#train-stations {
+    width: 640px;
+    margin: auto;
+    padding-right: 24px;
+    padding-left: 24px;
+}
+
+#train-stations li {
+    display: inline-block;
+    margin-right: 2em;
+    margin-bottom: 0.5em;
+    white-space: nowrap;
+}
+</style>
+</head>
+<body>
+<div class="rtb-container">
+    <table class="real-time-board" tabindex="-1">
+        <caption class="rtb-station-name">&nbsp;</caption>
+        <thead>
+            <tr>
+                <th scope="col">Platform</th>
+                <th scope="col" width="100%">Destination</th>
+                <th scope="col">Scheduled</th>
+                <th scope="col" width="10%" class="right-align">Due</th>
+            </tr>
+        </thead>
+        <tbody class="rtb-schedule">
+            <tr>
+                <td colspan="4">&nbsp;</td>
+            </tr>
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="4">/GI = via Glenn Innes, /N = via Newmarket, * = Arrival / Departure Due</td>
+            </tr>
+        </tfoot>
+    </table>
+</div>
+
+<div id="train-stations"></div>
+
+<!-- TODO: Show routes and map of the network to choose the station. -->
+
+<script src="http://yui.yahooapis.com/3.17.2/build/yui/yui-min.js"></script>
+<!-- <script src="http://momentjs.com/downloads/moment.min.js"></script> -->
+<script>
+YUI().use('handlebars', 'jsonp', 'node-base', 'router', 'template', function (Y) {
+    var handlebars = new Y.Template(Y.Handlebars),
+        scheduleTemplate,
+        scheduleErrorTemplate,
+        scheduleRetrieveTemplate,
+        scheduleTimer,
+        stationsTemplate,
+        router,
+
+        stations = [{
+            "stop": "105",
+            "name": "Avondale"
+        }, {
+            "stop": "119",
+            "name": "Baldwin Ave"
+        }, {
+            "stop": "133",
+            "name": "Britomart"
+        }, {
+            "stop": "112",
+            "name": "Ellerslie"
+        }, {
+            "stop": "123",
+            "name": "Fruitvale Rd"
+        }, {
+            "stop": "124",
+            "name": "Glen Eden"
+        }, {
+            "stop": "103",
+            "name": "Glen Innes"
+        }, {
+            "stop": "277",
+            "name": "Grafton"
+        }, {
+            "stop": "113",
+            "name": "Greenlane"
+        }, {
+            "stop": "125",
+            "name": "Henderson"
+        }, {
+            "stop": "99",
+            "name": "Homai"
+        }, {
+            "stop": "122",
+            "name": "Kingsland"
+        }, {
+            "stop": "9218",
+            "name": "Manukau"
+        }, {
+            "stop": "98",
+            "name": "Manurewa"
+        }, {
+            "stop": "117",
+            "name": "Meadowbank"
+        }, {
+            "stop": "109",
+            "name": "Middlemore"
+        }, {
+            "stop": "104",
+            "name": "Morningside"
+        }, {
+            "stop": "120",
+            "name": "Mt Albert"
+        }, {
+            "stop": "118",
+            "name": "Mt Eden"
+        }, {
+            "stop": "129",
+            "name": "New Lynn"
+        }, {
+            "stop": "115",
+            "name": "Newmarket"
+        }, {
+            "stop": "605",
+            "name": "Onehunga"
+        }, {
+            "stop": "116",
+            "name": "Orakei"
+        }, {
+            "stop": "101",
+            "name": "Otahuhu"
+        }, {
+            "stop": "130",
+            "name": "Panmure"
+        }, {
+            "stop": "97",
+            "name": "Papakura"
+        }, {
+            "stop": "100",
+            "name": "Papatoetoe"
+        }, {
+            "stop": "102",
+            "name": "Penrose"
+        }, {
+            "stop": "607",
+            "name": "Penrose Platform 3"
+        }, {
+            "stop": "108",
+            "name": "Puhinui"
+        }, {
+            "stop": "134",
+            "name": "Pukekohe"
+        }, {
+            "stop": "128",
+            "name": "Ranui"
+        }, {
+            "stop": "114",
+            "name": "Remuera"
+        }, {
+            "stop": "126",
+            "name": "Sturges"
+        }, {
+            "stop": "121",
+            "name": "Sunnyvale"
+        }, {
+            "stop": "127",
+            "name": "Swanson"
+        }, {
+            "stop": "244",
+            "name": "Sylvia Park"
+        }, {
+            "stop": "106",
+            "name": "Takanini"
+        }, {
+            "stop": "107",
+            "name": "Te Mahia"
+        }, {
+            "stop": "606",
+            "name": "Te Papapa"
+        }, {
+            "stop": "132",
+            "name": "Waitakere"
+        }, {
+            "stop": "111",
+            "name": "Westfield"
+        }];
+
+    scheduleTemplate = handlebars.compile(
+        '{{#each schedules}}' +
+            '<tr>' +
+                '<td>{{platform}}</td>' +
+                '<td>{{destination}}</td>' +
+                '<td>{{scheduled scheduled}}</td>' +
+                '<td class="right-align">{{due due}}</td>' +
+            '</tr>' +
+        '{{/each}}' +
+        '{{#unless schedules}}' +
+            '<tr>' +
+                '<td colspan="4">{{{marquee "No trains scheduled in the next hour"}}}</td>' +
+            '</tr>' +
+        '{{/unless}}' +
+        '{{#if message}}' +
+            '<tr>' +
+                '<td colspan="4">{{{marquee message}}}</td>' +
+            '</tr>' +
+        '{{/if}}'
+    );
+
+    scheduleErrorTemplate = handlebars.compile(
+        '<tr>' +
+                '<td colspan="4" width="0">{{{marquee "Error getting train schedule"}}}</td>' +
+        '</tr>'
+    );
+
+    scheduleRetrieveTemplate = handlebars.compile(
+        '<tr>' +
+                '<td colspan="4" width="0">{{{marquee "..."}}}</td>' +
+        '</tr>'
+    );
+
+    stationsTemplate = handlebars.compile(
+        '<ul>' +
+            '{{#stations}}' +
+                '<li><a href="#/{{slug this}}/">{{name}}</a></li>' +
+            '{{/stations}}' +
+        '</ul>'
+    );
+
+    Y.Handlebars.registerHelper('slug', function (station) {
+        return getStationSlug(station);
+    });
+
+    Y.Handlebars.registerHelper('scheduled', function (date) {
+        return padLeft(date.getHours()) + padLeft(date.getMinutes()); // 24 hr
+    });
+
+    Y.Handlebars.registerHelper('due', function (date) {
+        var millis = date.getTime() - new Date().getTime();
+            minutes = Math.floor(millis / 1000 / 60);
+        return minutes <= 0 ? '*' : minutes > 59 ? '' : minutes;
+    });
+
+    Y.Handlebars.registerHelper('marquee', function (message) {
+        return '<marquee scrollamount="8" scrolldelay="60">' + Y.Escape.html(message) + '</marquee>';
+    });
+
+    function padLeft(number) {
+        var text = '' + number,
+            pad = "00";
+        return pad.substring(0, pad.length - text.length) + text;
+    }
+
+    function parseJsonDate(text) {
+        // "/Date(1402825620000)/" is the raw format of JSON dates.
+        return new Date(parseInt(text.substr(6)));
+    }
+
+    router = new Y.Router({
+        html5: false, // Don't use HTML5 URLs as there is no server component to process them correctly.
+        root: '/trains.maxx.co.nz', // TODO: determine root from the initial document location.
+        routes: [{
+            path: '/:slug/',
+            callbacks: function (req) {
+                var station = getStationFromSlug(req.params.slug);
+                if (station) {
+                    getSchedule(station);
+                }
+            }
+        }]
+    });
+
+    function getSchedule(station, updating) {
+        var url = 'http://api.maxx.co.nz/RealTime/v2/Departures/Stop/' + station.stop + '?callback={callback}';
+
+        if (scheduleTimer) {
+            scheduleTimer.cancel();
+        }
+
+        Y.one('.rtb-station-name').set('text', station.name);
+        document.title = station.name + ' - Real Time Board - MAXX';
+        if (!updating) {
+            Y.one('.rtb-schedule').setHTML(scheduleRetrieveTemplate({}));
+            Y.one('.real-time-board').focus();
+        }
+
+        Y.jsonp(url, {
+            on: {
+                success: getScheduleOnSuccess,
+                failure: getScheduleOnFailure,
+            }
+        });
+
+        // Update the schedule every 60 seconds. Record the timer to cancel if
+        // it's changed before the station is changed.
+        scheduleTimer = Y.later(60 * 1000, this, function() {
+            getSchedule(station, true);
+        });
+    };
+
+    function getScheduleOnSuccess(response) {
+        var message,
+            schedules;
+
+        // The message to show on the real time board if one exists.
+        if (response.Extensions && response.Extensions[0]) {
+            message = response.Extensions[0].Text;
+        }
+
+        // Convert the JSON response from the MAXX API to something easier
+        // to handle within the handlebars templates.
+        if (response.Movements) {
+            schedules = Y.Array.map(response.Movements, function (item) {
+                // TODO: How to identify a cancelled service.
+                return {
+                    platform: item.DeparturePlatformName,
+                    destination: item.DestinationDisplay,
+                    scheduled: parseJsonDate(item.ExpectedDepartureTime || item.ActualDepartureTime),
+                    due: parseJsonDate(item.ExpectedDepartureTime || item.ActualDepartureTime)
+                };
+            });
+            schedules.sort(function (left, right) {
+                return left.scheduled === right.scheduled ? 0 : left.scheduled > right.scheduled ? 1 : -1;
+            });
+        }
+        Y.one('.rtb-schedule').setHTML(scheduleTemplate({
+            message: message,
+            schedules: schedules
+        }));
+    };
+
+    function getScheduleOnFailure() {
+        Y.one('.rtb-schedule').setHTML(scheduleErrorTemplate());
+    };
+
+    function getStationSlug(station) {
+        // Global RE used for replacing space since some names have multiple spaces.
+        return station.name.replace(/ /g, '-').toLowerCase(); // E.g. "New Lynn" -> "new-lynn"
+    };
+
+    function getStationFromSlug(slug) {
+        var i,
+            station;
+
+        for (i = 0; i < stations.length; i++) {
+            station = stations[i];
+            if (slug == getStationSlug(station)) {
+                return station;
+            }
+        }
+    };
+
+    function renderStations() {
+        Y.one('#train-stations').setHTML(stationsTemplate({
+            stations: stations
+        }));
+    };
+
+    if (router.hasRoute(document.location.href)) {
+        router.dispatch();
+    } else {
+        // Default to Britomart if nothing else specified.
+        document.location.href = '#/britomart/';
+    }
+    renderStations();
+});
+</script>
+</body>
+</html>
